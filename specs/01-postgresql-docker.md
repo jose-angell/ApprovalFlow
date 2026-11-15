@@ -1,16 +1,16 @@
 # SPEC 01 — PostgreSQL local con Docker Compose
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** —
 > **Fecha:** 2026-11-15
-> **Objetivo:** Levantar una base de datos PostgreSQL 17 local con Docker Compose, configurada mediante variables de un archivo `.env` y con datos persistidos en un volumen con nombre.
+> **Objetivo:** Levantar una base de datos PostgreSQL 16 local con Docker Compose, configurada mediante variables de un archivo `.env` y con datos persistidos en un volumen con nombre.
 
 ## Alcance
 
 **Dentro:**
 
 - `docker-compose.yml` en la raíz del repo con un único servicio `postgres`.
-- Imagen `postgres:17-alpine`.
+- Imagen `postgres:16-alpine`.
 - Variables `DB_NAME`, `DB_USER`, `DB_PASSWORD` y `DB_PORT` leídas desde `.env`.
 - Volumen con nombre `approvalflow_pgdata` para persistir los datos.
 - Archivo `.env` local (ignorado por git) con valores de desarrollo.
@@ -64,19 +64,19 @@ Otros valores fijos del servicio:
 
 ## Criterios de aceptación
 
-- [ ] Existen `docker-compose.yml`, `.env` y `.env.example` en la raíz del repo.
-- [ ] `git status` no muestra `.env`; sí muestra `.env.example` y `docker-compose.yml`.
-- [ ] `docker compose config` muestra `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` y el puerto con los valores del `.env`.
-- [ ] `docker compose up -d` deja el contenedor `approvalflow-postgres` en estado `running`.
-- [ ] `psql` dentro del contenedor conecta con `approvalflow_user` a la base `approvalflow` y `SELECT version();` devuelve PostgreSQL 17.
-- [ ] El puerto `5432` del host acepta conexiones (p. ej. `Test-NetConnection localhost -Port 5432` devuelve `TcpTestSucceeded : True`).
-- [ ] Tras crear una tabla de prueba, `docker compose down` y `docker compose up -d`, la tabla sigue existiendo.
-- [ ] `docker volume ls` lista un volumen cuyo nombre termina en `approvalflow_pgdata`.
-- [ ] Cambiar `DB_PORT` en `.env` y recrear el contenedor cambia el puerto expuesto en el host.
+- [x] Existen `docker-compose.yml`, `.env` y `.env.example` en la raíz del repo.
+- [x] `git status` no muestra `.env`; sí muestra `.env.example` y `docker-compose.yml`.
+- [x] `docker compose config` muestra `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` y el puerto con los valores del `.env`.
+- [x] `docker compose up -d` deja el contenedor `approvalflow-postgres` en estado `running`.
+- [x] `psql` dentro del contenedor conecta con `approvalflow_user` a la base `approvalflow` y `SELECT version();` devuelve PostgreSQL 16.
+- [x] El puerto `5432` del host acepta conexiones (p. ej. `Test-NetConnection localhost -Port 5432` devuelve `TcpTestSucceeded : True`).
+- [x] Tras crear una tabla de prueba, `docker compose down` y `docker compose up -d`, la tabla sigue existiendo.
+- [x] `docker volume ls` lista un volumen cuyo nombre termina en `approvalflow_pgdata`.
+- [x] Cambiar `DB_PORT` en `.env` y recrear el contenedor cambia el puerto expuesto en el host.
 
 ## Decisiones
 
-- **Sí:** `postgres:17-alpine`. Versión mayor fijada y imagen ligera; evita cambios inesperados de `latest`.
+- **Sí:** `postgres:16-alpine`. Versión mayor fijada y imagen ligera; evita cambios inesperados de `latest`.
 - **No:** `postgres:latest`. Una actualización mayor rompería el volumen existente.
 - **Sí:** volumen con nombre `approvalflow_pgdata`. Docker gestiona permisos y queda fuera de la carpeta de OneDrive.
 - **No:** bind mount en una carpeta del repo. OneDrive sincronizaría los archivos de datos y podría corromperlos.
