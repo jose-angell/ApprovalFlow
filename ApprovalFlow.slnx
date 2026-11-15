@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="ApprovalFlow/ApprovalFlow.csproj" />
+  <Project Path="ApprovalFlow.Application/ApprovalFlow.Application.csproj" />
+  <Project Path="ApprovalFlow.Domain/ApprovalFlow.Domain.csproj" />
+  <Project Path="ApprovalFlow.Infrastructure/ApprovalFlow.Infrastructure.csproj" />
+  <Project Path="ApprovalFlow/ApprovalFlow.Api.csproj" />
 </Solution>
