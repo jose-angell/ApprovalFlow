@@ -19,7 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ApprovalFlow.Domain\ApprovalFlow.Domain.csproj" />
+    <ProjectReference Include="..\ApprovalFlow\ApprovalFlow.Api.csproj" />
   </ItemGroup>
 
 </Project>
