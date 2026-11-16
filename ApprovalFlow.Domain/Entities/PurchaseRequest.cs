@@ -77,6 +77,72 @@ public class PurchaseRequest
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void StartReview(User approver)
+    {
+        EnsureCanReview(approver);
+        EnsureStatus(PurchaseRequestStatus.Pending);
+
+        var now = DateTime.UtcNow;
+        Status = PurchaseRequestStatus.InReview;
+        ReviewedAt = now;
+        ReviewedById = approver.Id;
+        UpdatedAt = now;
+    }
+
+    public void Approve(User approver, string? comments)
+    {
+        EnsureCanReview(approver);
+        EnsureStatus(PurchaseRequestStatus.InReview);
+        var cleanComments = ValidateOptionalComments(comments);
+
+        var now = DateTime.UtcNow;
+        Status = PurchaseRequestStatus.Approved;
+        Comments = cleanComments;
+        ApprovedAt = now;
+        ApprovedById = approver.Id;
+        UpdatedAt = now;
+    }
+
+    public void Reject(User approver, string comments)
+    {
+        EnsureCanReview(approver);
+        EnsureStatus(PurchaseRequestStatus.InReview);
+        var cleanComments = ValidateRequired(comments, CommentsMaxLength, "El comentario", nameof(comments));
+
+        var now = DateTime.UtcNow;
+        Status = PurchaseRequestStatus.Rejected;
+        Comments = cleanComments;
+        RejectedAt = now;
+        RejectedById = approver.Id;
+        UpdatedAt = now;
+    }
+
+    public void Cancel(User requester)
+    {
+        EnsureIsActiveOwner(requester);
+        EnsureStatus(PurchaseRequestStatus.Pending);
+
+        var now = DateTime.UtcNow;
+        Status = PurchaseRequestStatus.Cancelled;
+        CancelledAt = now;
+        CancelledById = requester.Id;
+        UpdatedAt = now;
+    }
+
+    private void EnsureCanReview(User approver)
+    {
+        ArgumentNullException.ThrowIfNull(approver);
+
+        if (approver.Role != UserRole.Approver)
+            throw new InvalidOperationException("Solo un usuario con rol Approver puede revisar solicitudes.");
+        if (!approver.IsActive)
+            throw new InvalidOperationException("El aprobador está inactivo.");
+        if (approver.DepartmentId != DepartmentId)
+            throw new InvalidOperationException("El aprobador debe pertenecer al mismo departamento que la solicitud.");
+        if (approver.Id == RequesterId)
+            throw new InvalidOperationException("El solicitante no puede revisar su propia solicitud.");
+    }
+
     private void EnsureIsActiveOwner(User requester)
     {
         ArgumentNullException.ThrowIfNull(requester);
@@ -100,6 +166,17 @@ public class PurchaseRequest
             throw new ArgumentException($"{label} es obligatorio.", paramName);
         if (clean.Length > maxLength)
             throw new ArgumentException($"{label} no puede exceder {maxLength} caracteres.", paramName);
+        return clean;
+    }
+
+    private static string? ValidateOptionalComments(string? comments)
+    {
+        if (string.IsNullOrWhiteSpace(comments))
+            return null;
+
+        var clean = comments.Trim();
+        if (clean.Length > CommentsMaxLength)
+            throw new ArgumentException($"El comentario no puede exceder {CommentsMaxLength} caracteres.", nameof(comments));
         return clean;
     }
 
