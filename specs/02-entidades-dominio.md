@@ -1,6 +1,6 @@
 # SPEC 02 — Entidades y enums del dominio
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** —
 > **Fecha:** 2026-11-15
 > **Objetivo:** Crear en `ApprovalFlow.Domain` las entidades `Department`, `User` y `PurchaseRequest` y los enums `UserRole` y `PurchaseRequestStatus`, con sus validaciones y transiciones de estado protegidas dentro de la entidad y cubiertas por pruebas unitarias.
@@ -126,24 +126,24 @@ Métodos y reglas:
 
 ## Criterios de aceptación
 
-- [ ] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
-- [ ] `ApprovalFlow.Domain.csproj` no tiene ningún `PackageReference` ni `ProjectReference`.
-- [ ] Existen `ApprovalFlow.Domain/Enums/UserRole.cs`, `Enums/PurchaseRequestStatus.cs`, `Entities/Department.cs`, `Entities/User.cs` y `Entities/PurchaseRequest.cs`. `Class1.cs` ya no existe.
-- [ ] Ninguna propiedad de las tres entidades tiene setter público.
-- [ ] `Department.Create` con nombre vacío o de más de 100 caracteres lanza `ArgumentException`.
-- [ ] `User.Create` normaliza `"  Ana@Mail.COM "` a `"ana@mail.com"` y lanza `ArgumentException` con `"no-es-email"`.
-- [ ] `User.Create` con rol `Requester` y sin departamento lanza excepción. Con rol `Admin` y sin departamento crea el usuario con `DepartmentId == null`.
-- [ ] `User.Create` o `AssignDepartment` con un `Department` inactivo lanza `InvalidOperationException`.
-- [ ] `PurchaseRequest.Create` con un usuario que no es `Requester`, que está inactivo o cuyo departamento es nulo lanza `InvalidOperationException`.
-- [ ] `PurchaseRequest.Create` con `TotalAmount` igual a `0`, negativo o con 3 decimales (`10.123m`) lanza `ArgumentException`.
-- [ ] Una solicitud recién creada tiene `Status == Pending`, `DepartmentId == requester.DepartmentId` y `CreatedAt.Kind == DateTimeKind.Utc`.
-- [ ] `Update` y `Cancel` lanzan `InvalidOperationException` si el actor no es el dueño o si el estado no es `Pending`.
-- [ ] `StartReview`, `Approve` y `Reject` lanzan `InvalidOperationException` si el actor no es `Approver`, si está inactivo, si es de otro departamento o si es el propio solicitante.
-- [ ] `Approve` y `Reject` lanzan `InvalidOperationException` si el estado no es `InReview`.
-- [ ] `Reject` con `comments` vacío lanza `ArgumentException`.
-- [ ] Cada transición válida fija su par `XxxAt` / `XxxById` y `UpdatedAt`.
-- [ ] Desde `Approved`, `Rejected` o `Cancelled`, cualquier método de transición o `Update` lanza `InvalidOperationException`.
-- [ ] `dotnet test` pasa todas las pruebas.
+- [x] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
+- [x] `ApprovalFlow.Domain.csproj` no tiene ningún `PackageReference` ni `ProjectReference`.
+- [x] Existen `ApprovalFlow.Domain/Enums/UserRole.cs`, `Enums/PurchaseRequestStatus.cs`, `Entities/Department.cs`, `Entities/User.cs` y `Entities/PurchaseRequest.cs`. `Class1.cs` ya no existe.
+- [x] Ninguna propiedad de las tres entidades tiene setter público.
+- [x] `Department.Create` con nombre vacío o de más de 100 caracteres lanza `ArgumentException`.
+- [x] `User.Create` normaliza `"  Ana@Mail.COM "` a `"ana@mail.com"` y lanza `ArgumentException` con `"no-es-email"`.
+- [x] `User.Create` con rol `Requester` y sin departamento lanza excepción. Con rol `Admin` y sin departamento crea el usuario con `DepartmentId == null`.
+- [x] `User.Create` o `AssignDepartment` con un `Department` inactivo lanza `InvalidOperationException`.
+- [x] `PurchaseRequest.Create` con un usuario que no es `Requester`, que está inactivo o cuyo departamento es nulo lanza `InvalidOperationException`.
+- [x] `PurchaseRequest.Create` con `TotalAmount` igual a `0`, negativo o con 3 decimales (`10.123m`) lanza `ArgumentException`.
+- [x] Una solicitud recién creada tiene `Status == Pending`, `DepartmentId == requester.DepartmentId` y `CreatedAt.Kind == DateTimeKind.Utc`.
+- [x] `Update` y `Cancel` lanzan `InvalidOperationException` si el actor no es el dueño o si el estado no es `Pending`.
+- [x] `StartReview`, `Approve` y `Reject` lanzan `InvalidOperationException` si el actor no es `Approver`, si está inactivo, si es de otro departamento o si es el propio solicitante.
+- [x] `Approve` y `Reject` lanzan `InvalidOperationException` si el estado no es `InReview`.
+- [x] `Reject` con `comments` vacío lanza `ArgumentException`.
+- [x] Cada transición válida fija su par `XxxAt` / `XxxById` y `UpdatedAt`.
+- [x] Desde `Approved`, `Rejected` o `Cancelled`, cualquier método de transición o `Update` lanza `InvalidOperationException`.
+- [x] `dotnet test` pasa todas las pruebas.
 
 ## Decisiones
 
