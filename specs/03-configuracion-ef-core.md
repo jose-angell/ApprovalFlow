@@ -1,6 +1,6 @@
 # SPEC 03 — Configuración de EF Core con Fluent API y AppDbContext
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** SPEC 01, SPEC 02
 > **Fecha:** 2026-11-16
 > **Objetivo:** Mapear `Department`, `User` y `PurchaseRequest` a PostgreSQL con Fluent API: una configuración por archivo en `ApprovalFlow.Infrastructure/Configurations`, el `AppDbContext` en `Infrastructure/Persistence` registrado en la API y la migración inicial aplicada.
@@ -135,22 +135,22 @@ Namespaces: `ApprovalFlow.Infrastructure.Configurations` y `ApprovalFlow.Infrast
 
 ## Criterios de aceptación
 
-- [ ] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
-- [ ] `ApprovalFlow.Infrastructure.csproj` referencia `Npgsql.EntityFrameworkCore.PostgreSQL` y `Microsoft.Extensions.Configuration.Abstractions`. `ApprovalFlow.Api.csproj` referencia `ApprovalFlow.Infrastructure` y `Microsoft.EntityFrameworkCore.Design`.
-- [ ] `ApprovalFlow.Domain.csproj` sigue sin `PackageReference` ni `ProjectReference`.
-- [ ] `ApprovalFlow.Application.csproj` no referencia Infrastructure ni EF Core.
-- [ ] Existen los tres archivos en `Infrastructure/Configurations/`, `Infrastructure/Persistence/AppDbContext.cs` e `Infrastructure/DependencyInjection.cs`. `Infrastructure/Class1.cs` ya no existe.
-- [ ] Cada configuración está en su propio archivo e implementa `IEntityTypeConfiguration<T>`. `AppDbContext.OnModelCreating` no contiene mapeos inline, solo `ApplyConfigurationsFromAssembly`.
-- [ ] Existe `Infrastructure/Persistence/Migrations/*_InitialCreate.cs`.
-- [ ] `dotnet ef database update` termina sin errores contra el contenedor `approvalflow-postgres`.
-- [ ] `\dt` en psql lista `departments`, `users`, `purchase_requests` y `__EFMigrationsHistory`.
-- [ ] `\d users` muestra `email character varying(256)`, `role character varying(20)` y un índice único en `email`.
-- [ ] `\d departments` muestra un índice único en `name`.
-- [ ] `\d purchase_requests` muestra `total_amount numeric(18,2)`, `created_at timestamp with time zone`, un índice único en `request_number`, un índice en `status` y seis FKs (`requester_id`, `department_id` y los cuatro `*_by_id`).
-- [ ] Ninguna FK es `ON DELETE CASCADE`. En `\d` aparecen como `ON DELETE RESTRICT`.
-- [ ] `dotnet run --project ApprovalFlow/ApprovalFlow.Api.csproj` arranca en Development sin excepciones.
-- [ ] Con `DefaultConnection` vacía, `AddInfrastructure` lanza `InvalidOperationException` al arrancar.
-- [ ] `dotnet test` sigue pasando todas las pruebas de SPEC 02.
+- [x] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
+- [x] `ApprovalFlow.Infrastructure.csproj` referencia `Npgsql.EntityFrameworkCore.PostgreSQL` y `Microsoft.Extensions.Configuration.Abstractions`. `ApprovalFlow.Api.csproj` referencia `ApprovalFlow.Infrastructure` y `Microsoft.EntityFrameworkCore.Design`.
+- [x] `ApprovalFlow.Domain.csproj` sigue sin `PackageReference` ni `ProjectReference`.
+- [x] `ApprovalFlow.Application.csproj` no referencia Infrastructure ni EF Core.
+- [x] Existen los tres archivos en `Infrastructure/Configurations/`, `Infrastructure/Persistence/AppDbContext.cs` e `Infrastructure/DependencyInjection.cs`. `Infrastructure/Class1.cs` ya no existe.
+- [x] Cada configuración está en su propio archivo e implementa `IEntityTypeConfiguration<T>`. `AppDbContext.OnModelCreating` no contiene mapeos inline, solo `ApplyConfigurationsFromAssembly`.
+- [x] Existe `Infrastructure/Persistence/Migrations/*_InitialCreate.cs`.
+- [x] `dotnet ef database update` termina sin errores contra el contenedor `approvalflow-postgres`.
+- [x] `\dt` en psql lista `departments`, `users`, `purchase_requests` y `__EFMigrationsHistory`.
+- [x] `\d users` muestra `email character varying(256)`, `role character varying(20)` y un índice único en `email`.
+- [x] `\d departments` muestra un índice único en `name`.
+- [x] `\d purchase_requests` muestra `total_amount numeric(18,2)`, `created_at timestamp with time zone`, un índice único en `request_number`, un índice en `status` y seis FKs (`requester_id`, `department_id` y los cuatro `*_by_id`).
+- [x] Ninguna FK es `ON DELETE CASCADE`. En `\d` aparecen como `ON DELETE RESTRICT`.
+- [x] `dotnet run --project ApprovalFlow/ApprovalFlow.Api.csproj` arranca en Development sin excepciones.
+- [x] Con `DefaultConnection` vacía, `AddInfrastructure` lanza `InvalidOperationException` al arrancar.
+- [x] `dotnet test` sigue pasando todas las pruebas de SPEC 02.
 
 ## Decisiones
 

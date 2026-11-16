@@ -39,8 +39,3 @@ Rules:
 - Domain must not reference EF Core or any other layer.
 - Application must not reference Infrastructure; it depends on interfaces it owns.
 - Controllers stay thin and delegate to Application use cases.
-
-## Known gaps in the current setup
-- Infrastructure references EF Core but **not** the PostgreSQL provider yet (`Npgsql.EntityFrameworkCore.PostgreSQL` must be added).
-- The API project does not reference Infrastructure, so DI registration of the DbContext/repositories can't happen in `Program.cs` until that reference (or a DI extension) is added. `dotnet ef` with `--startup-project ApprovalFlow` also needs it plus `Microsoft.EntityFrameworkCore.Design` on the startup project.
-- No connection string in `appsettings.json` yet.
