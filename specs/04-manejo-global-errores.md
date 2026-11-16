@@ -1,6 +1,6 @@
 # SPEC 04 — Excepciones propias y handler global de errores
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** SPEC 02, SPEC 03
 > **Fecha:** 2026-11-16
 > **Objetivo:** Crear en `ApprovalFlow.Application/Exceptions` las excepciones `ConflictException`, `ForbiddenException`, `NotFoundException` y `UnauthorizedException`, y un `GlobalExceptionHandler` (`IExceptionHandler`) en la API que las registre con `ILogger` y las convierta en respuestas `ProblemDetails` con el código HTTP adecuado.
@@ -95,21 +95,21 @@ app.UseExceptionHandler(); // primera línea del pipeline
 
 ## Criterios de aceptación
 
-- [ ] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
-- [ ] Existen `ConflictException.cs`, `ForbiddenException.cs`, `NotFoundException.cs` y `UnauthorizedException.cs` en `ApprovalFlow.Application/Exceptions/`, con namespace `ApprovalFlow.Application.Exceptions`. `ApprovalFlow.Application/Class1.cs` ya no existe.
-- [ ] Cada excepción hereda de `System.Exception` y tiene un solo constructor público `(string message)`.
-- [ ] `ApprovalFlow.Application.csproj` sigue sin `PackageReference` y sin referencias a Infrastructure o a ASP.NET Core.
-- [ ] `ApprovalFlow.Domain.csproj` sigue sin `PackageReference` ni `ProjectReference`.
-- [ ] `GlobalExceptionHandler` implementa `IExceptionHandler` y está en `ApprovalFlow/Middleware/`.
-- [ ] `Program.cs` llama a `AddProblemDetails()`, `AddExceptionHandler<GlobalExceptionHandler>()` y `UseExceptionHandler()`. `UseExceptionHandler()` es el primer middleware.
-- [ ] Una `NotFoundException("x")` produce 404, `Content-Type` `application/problem+json`, `title` `"Recurso no encontrado"` y `detail` `"x"`.
-- [ ] `ConflictException` → 409, `ForbiddenException` → 403, `UnauthorizedException` → 401. En los tres, `detail` es el mensaje de la excepción.
-- [ ] `ArgumentException` y `ArgumentNullException` → 400. `InvalidOperationException` → 409.
-- [ ] Una `Exception` genérica con mensaje `"secreto"` produce 500, y el cuerpo no contiene `"secreto"`.
-- [ ] Toda respuesta incluye `status`, `title`, `detail`, `instance` y `traceId`.
-- [ ] `TryHandleAsync` devuelve `true` en todos los casos.
-- [ ] `dotnet test` pasa todas las pruebas, tanto las de SPEC 02 como las nuevas de `GlobalExceptionHandlerTests`.
-- [ ] `dotnet run --project ApprovalFlow/ApprovalFlow.Api.csproj` arranca sin excepciones.
+- [x] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
+- [x] Existen `ConflictException.cs`, `ForbiddenException.cs`, `NotFoundException.cs` y `UnauthorizedException.cs` en `ApprovalFlow.Application/Exceptions/`, con namespace `ApprovalFlow.Application.Exceptions`. `ApprovalFlow.Application/Class1.cs` ya no existe.
+- [x] Cada excepción hereda de `System.Exception` y tiene un solo constructor público `(string message)`.
+- [x] `ApprovalFlow.Application.csproj` sigue sin `PackageReference` y sin referencias a Infrastructure o a ASP.NET Core.
+- [x] `ApprovalFlow.Domain.csproj` sigue sin `PackageReference` ni `ProjectReference`.
+- [x] `GlobalExceptionHandler` implementa `IExceptionHandler` y está en `ApprovalFlow/Middleware/`.
+- [x] `Program.cs` llama a `AddProblemDetails()`, `AddExceptionHandler<GlobalExceptionHandler>()` y `UseExceptionHandler()`. `UseExceptionHandler()` es el primer middleware.
+- [x] Una `NotFoundException("x")` produce 404, `Content-Type` `application/problem+json`, `title` `"Recurso no encontrado"` y `detail` `"x"`.
+- [x] `ConflictException` → 409, `ForbiddenException` → 403, `UnauthorizedException` → 401. En los tres, `detail` es el mensaje de la excepción.
+- [x] `ArgumentException` y `ArgumentNullException` → 400. `InvalidOperationException` → 409.
+- [x] Una `Exception` genérica con mensaje `"secreto"` produce 500, y el cuerpo no contiene `"secreto"`.
+- [x] Toda respuesta incluye `status`, `title`, `detail`, `instance` y `traceId`.
+- [x] `TryHandleAsync` devuelve `true` en todos los casos.
+- [x] `dotnet test` pasa todas las pruebas, tanto las de SPEC 02 como las nuevas de `GlobalExceptionHandlerTests`.
+- [x] `dotnet run --project ApprovalFlow/ApprovalFlow.Api.csproj` arranca sin excepciones.
 
 ## Decisiones
 
