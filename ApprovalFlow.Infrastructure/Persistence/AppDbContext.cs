@@ -1,9 +1,10 @@
+using ApprovalFlow.Application.Abstractions;
 using ApprovalFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApprovalFlow.Infrastructure.Persistence;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IApplicationDbContext
 {
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<User> Users => Set<User>();

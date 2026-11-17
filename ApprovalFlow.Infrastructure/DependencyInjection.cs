@@ -1,4 +1,6 @@
+using ApprovalFlow.Application.Abstractions;
 using ApprovalFlow.Infrastructure.Persistence;
+using ApprovalFlow.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +20,8 @@ public static class DependencyInjection
         }
 
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         return services;
     }
