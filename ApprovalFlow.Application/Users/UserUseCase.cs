@@ -41,6 +41,59 @@ public class UserUseCase(IApplicationDbContext context, IPasswordHasher password
         return users.Select(UserDto.FromEntity).ToList();
     }
 
+    public async Task<UserDto> UpdateProfileAsync(Guid id, UpdateUserProfileDto dto, CancellationToken ct = default)
+    {
+        var user = await GetTrackedUserAsync(id, ct);
+        await EnsureEmailIsUniqueAsync(dto.Email, id, ct);
+
+        user.UpdateProfile(dto.FullName, dto.Email);
+        await _context.SaveChangesAsync(ct);
+
+        return UserDto.FromEntity(user);
+    }
+
+    public async Task<UserDto> ChangeRoleAsync(Guid id, ChangeUserRoleDto dto, CancellationToken ct = default)
+    {
+        var user = await GetTrackedUserAsync(id, ct);
+        var department = await ResolveDepartmentAsync(dto.DepartmentId, ct);
+
+        user.ChangeRole(dto.Role, department);
+        await _context.SaveChangesAsync(ct);
+
+        return UserDto.FromEntity(user);
+    }
+
+    public async Task ActivateAsync(Guid id, CancellationToken ct = default)
+    {
+        var user = await GetTrackedUserAsync(id, ct);
+
+        user.Activate();
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task DeactivateAsync(Guid id, CancellationToken ct = default)
+    {
+        var user = await GetTrackedUserAsync(id, ct);
+
+        user.Deactivate();
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task ResetPasswordAsync(Guid id, ResetPasswordDto dto, CancellationToken ct = default)
+    {
+        var user = await GetTrackedUserAsync(id, ct);
+        var passwordHash = _passwordHasher.Hash(dto.NewPassword);
+
+        user.ChangePasswordHash(passwordHash);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    private async Task<User> GetTrackedUserAsync(Guid id, CancellationToken ct)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Id == id, ct)
+            ?? throw new NotFoundException($"El usuario '{id}' no existe.");
+    }
+
     private async Task EnsureEmailIsUniqueAsync(string email, Guid? excludeUserId, CancellationToken ct)
     {
         var normalized = (email ?? string.Empty).Trim().ToLowerInvariant();
