@@ -1,6 +1,6 @@
 # SPEC 05 — Casos de uso de usuarios en Application
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** SPEC 02, SPEC 03, SPEC 04
 > **Fecha:** 2026-11-17
 > **Objetivo:** Crear en `ApprovalFlow.Application/Users` el caso de uso `UserUseCase` (crear, consultar, listar, editar perfil, cambiar rol, activar/desactivar y restablecer contraseña) con sus DTOs anotados con DataAnnotations, persistiendo directamente a través de `IApplicationDbContext`.
@@ -136,28 +136,28 @@ public static IServiceCollection AddApplication(this IServiceCollection services
 
 ## Criterios de aceptación
 
-- [ ] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
-- [ ] `ApprovalFlow.Application.csproj` referencia `Microsoft.EntityFrameworkCore` y no referencia Npgsql, Infrastructure ni ASP.NET Core.
-- [ ] `ApprovalFlow.Domain.csproj` sigue sin `PackageReference` ni `ProjectReference`.
-- [ ] Existen `Application/Abstractions/IApplicationDbContext.cs`, `Application/Abstractions/IPasswordHasher.cs`, `Application/Users/IUserUseCase.cs`, `Application/Users/UserUseCase.cs`, `Application/DependencyInjection.cs` y los cinco DTOs en `Application/Users/Dtos/`.
-- [ ] No existe ninguna interfaz ni clase de repositorio o Unit of Work. `UserUseCase` usa `_context` (`IApplicationDbContext`).
-- [ ] `AppDbContext` implementa `IApplicationDbContext`. `IApplicationDbContext`, `IPasswordHasher` e `IUserUseCase` se resuelven desde el contenedor de la API.
-- [ ] Todos los DTOs de entrada tienen las DataAnnotations de la tabla. `UserDto` no tiene propiedad `PasswordHash`.
-- [ ] `PasswordHasher.Hash("Secreta123")` devuelve un valor distinto de `"Secreta123"`, `Verify(hash, "Secreta123")` es `true` y `Verify(hash, "otra")` es `false`.
-- [ ] `CreateAsync` con datos válidos guarda el usuario, devuelve `IsActive = true` y el `PasswordHash` guardado verifica contra la contraseña original.
-- [ ] `CreateAsync` con un email ya existente (aunque difiera en mayúsculas o espacios) lanza `ConflictException`.
-- [ ] `CreateAsync` con un `DepartmentId` inexistente lanza `NotFoundException`.
-- [ ] `CreateAsync` con rol `Requester` y `DepartmentId` nulo lanza `ArgumentException` (del dominio).
-- [ ] `CreateAsync` con un departamento inactivo lanza `InvalidOperationException` (del dominio).
-- [ ] `GetByIdAsync` con un id inexistente lanza `NotFoundException`.
-- [ ] `GetAllAsync` devuelve los usuarios ordenados por `FullName`.
-- [ ] `UpdateProfileAsync` con el email de otro usuario lanza `ConflictException`. Con su propio email no lanza.
-- [ ] `ChangeRoleAsync` a `Admin` con `DepartmentId` nulo deja `DepartmentId = null`.
-- [ ] `DeactivateAsync` deja `IsActive = false` y `ActivateAsync` lo vuelve a `true`. Ambos actualizan `UpdatedAt`.
-- [ ] `ResetPasswordAsync` cambia el hash: la nueva contraseña verifica y la anterior no.
-- [ ] `UpdateProfileAsync`, `ChangeRoleAsync`, `ActivateAsync`, `DeactivateAsync` y `ResetPasswordAsync` con un id inexistente lanzan `NotFoundException`.
-- [ ] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas.
-- [ ] `dotnet run --project ApprovalFlow/ApprovalFlow.Api.csproj` arranca sin excepciones.
+- [x] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
+- [x] `ApprovalFlow.Application.csproj` referencia `Microsoft.EntityFrameworkCore` y no referencia Npgsql, Infrastructure ni ASP.NET Core.
+- [x] `ApprovalFlow.Domain.csproj` sigue sin `PackageReference` ni `ProjectReference`.
+- [x] Existen `Application/Abstractions/IApplicationDbContext.cs`, `Application/Abstractions/IPasswordHasher.cs`, `Application/Users/IUserUseCase.cs`, `Application/Users/UserUseCase.cs`, `Application/DependencyInjection.cs` y los cinco DTOs en `Application/Users/Dtos/`.
+- [x] No existe ninguna interfaz ni clase de repositorio o Unit of Work. `UserUseCase` usa `_context` (`IApplicationDbContext`).
+- [x] `AppDbContext` implementa `IApplicationDbContext`. `IApplicationDbContext`, `IPasswordHasher` e `IUserUseCase` se resuelven desde el contenedor de la API.
+- [x] Todos los DTOs de entrada tienen las DataAnnotations de la tabla. `UserDto` no tiene propiedad `PasswordHash`.
+- [x] `PasswordHasher.Hash("Secreta123")` devuelve un valor distinto de `"Secreta123"`, `Verify(hash, "Secreta123")` es `true` y `Verify(hash, "otra")` es `false`.
+- [x] `CreateAsync` con datos válidos guarda el usuario, devuelve `IsActive = true` y el `PasswordHash` guardado verifica contra la contraseña original.
+- [x] `CreateAsync` con un email ya existente (aunque difiera en mayúsculas o espacios) lanza `ConflictException`.
+- [x] `CreateAsync` con un `DepartmentId` inexistente lanza `NotFoundException`.
+- [x] `CreateAsync` con rol `Requester` y `DepartmentId` nulo lanza `ArgumentException` (del dominio).
+- [x] `CreateAsync` con un departamento inactivo lanza `InvalidOperationException` (del dominio).
+- [x] `GetByIdAsync` con un id inexistente lanza `NotFoundException`.
+- [x] `GetAllAsync` devuelve los usuarios ordenados por `FullName`.
+- [x] `UpdateProfileAsync` con el email de otro usuario lanza `ConflictException`. Con su propio email no lanza.
+- [x] `ChangeRoleAsync` a `Admin` con `DepartmentId` nulo deja `DepartmentId = null`.
+- [x] `DeactivateAsync` deja `IsActive = false` y `ActivateAsync` lo vuelve a `true`. Ambos actualizan `UpdatedAt`.
+- [x] `ResetPasswordAsync` cambia el hash: la nueva contraseña verifica y la anterior no.
+- [x] `UpdateProfileAsync`, `ChangeRoleAsync`, `ActivateAsync`, `DeactivateAsync` y `ResetPasswordAsync` con un id inexistente lanzan `NotFoundException`.
+- [x] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas.
+- [x] `dotnet run --project ApprovalFlow/ApprovalFlow.Api.csproj` arranca sin excepciones.
 
 ## Decisiones
 

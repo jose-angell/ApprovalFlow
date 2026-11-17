@@ -31,12 +31,13 @@ N-layer Clean Architecture. Dependencies point inward toward Domain:
 | Project | Folder | Responsibility | References |
 |---|---|---|---|
 | `ApprovalFlow.Domain` | `ApprovalFlow.Domain/` | Entities with their own validations and behavior methods (state transitions like approve/reject live on the entity, not in services). No external packages. | — |
-| `ApprovalFlow.Application` | `ApprovalFlow.Application/` | Business logic / use cases; defines abstractions (repository interfaces, etc.) that Infrastructure implements. Custom exceptions live in `Exceptions/` (`NotFoundException`, `ConflictException`, `ForbiddenException`, `UnauthorizedException`); use cases throw them and know nothing about HTTP. | Domain |
+| `ApprovalFlow.Application` | `ApprovalFlow.Application/` | Business logic / use cases; defines abstractions that Infrastructure implements. `Abstractions/` holds `IApplicationDbContext` and `IPasswordHasher`; `Abstractions/UseCases/` groups all use case interfaces (`IUserUseCase`, ...). Each use case lives in its own feature folder (`Users/` with `UserUseCase` and `Dtos/`); DTOs are `record`s annotated with DataAnnotations. `DependencyInjection.cs` exposes `AddApplication()`. References `Microsoft.EntityFrameworkCore` (abstractions only, no provider such as Npgsql). Custom exceptions live in `Exceptions/` (`NotFoundException`, `ConflictException`, `ForbiddenException`, `UnauthorizedException`); use cases throw them and know nothing about HTTP. | Domain |
 | `ApprovalFlow.Infrastructure` | `ApprovalFlow.Infrastructure/` | Data access with EF Core + PostgreSQL; implements Application interfaces. | Application, Domain |
 | `ApprovalFlow.Api` | `ApprovalFlow/` (note: folder name differs from project name) | Presentation: ASP.NET Core controllers, DI composition in `Program.cs`. `Middleware/GlobalExceptionHandler` (`IExceptionHandler`) maps exceptions to `ProblemDetails` responses. | Application | Application |
 
 Rules:
 - Domain must not reference EF Core or any other layer.
-- Application must not reference Infrastructure; it depends on interfaces it owns.
+- Application must not reference Infrastructure, Npgsql or ASP.NET Core; it depends on interfaces it owns. It may use EF Core through `IApplicationDbContext` (`DbSet<T>`, `AnyAsync`, `ToListAsync`).
+- Do not create repositories or Unit of Work: use cases inject `IApplicationDbContext` as `_context` (`DbContext` already is both patterns).
 - Controllers stay thin and delegate to Application use cases.
 - Error handling is global: do not catch exceptions in controllers. Throw Application exceptions and let `GlobalExceptionHandler` map them (404/409/403/401). Domain's `ArgumentException` → 400 and `InvalidOperationException` → 409; any other exception → 500 with a generic message (details only in the log).
