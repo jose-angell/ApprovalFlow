@@ -2,6 +2,7 @@ using ApprovalFlow.Api.Extensions;
 using ApprovalFlow.Api.Middleware;
 using ApprovalFlow.Application;
 using ApprovalFlow.Infrastructure;
+using ApprovalFlow.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
+
+await app.Services.SeedAdminAsync();
 
 // Configure the HTTP request pipeline.
 
