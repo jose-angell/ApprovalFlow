@@ -1,6 +1,45 @@
 @ApprovalFlow_HostAddress = http://localhost:5133
+# Pega aquí el accessToken devuelto por el login.
+@token =
 
-GET {{ApprovalFlow_HostAddress}}/weatherforecast/
+### Login (Admin sembrado en Development)
+POST {{ApprovalFlow_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@approvalflow.local",
+  "password": "Admin-Dev-123"
+}
+
+### Listar usuarios (Admin)
+GET {{ApprovalFlow_HostAddress}}/api/users
 Accept: application/json
+Authorization: Bearer {{token}}
 
-###
+### Usuario autenticado
+GET {{ApprovalFlow_HostAddress}}/api/users/me
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Crear usuario (Admin). Roles: 1 = Admin, 2 = Requester, 3 = Approver, 4 = Finance
+POST {{ApprovalFlow_HostAddress}}/api/users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "fullName": "Ana Solicitante",
+  "email": "ana@approvalflow.local",
+  "password": "Clave-Segura-123",
+  "role": 2,
+  "departmentId": null
+}
+
+### Cambiar mi contraseña
+PUT {{ApprovalFlow_HostAddress}}/api/users/me/password
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "currentPassword": "Admin-Dev-123",
+  "newPassword": "Nueva-Clave-456"
+}
