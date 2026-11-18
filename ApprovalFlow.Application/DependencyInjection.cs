@@ -1,4 +1,5 @@
 using ApprovalFlow.Application.Abstractions.UseCases;
+using ApprovalFlow.Application.Auth;
 using ApprovalFlow.Application.Users;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,6 +10,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<IUserUseCase, UserUseCase>();
+        services.AddScoped<IAuthUseCase, AuthUseCase>();
         return services;
     }
 }
