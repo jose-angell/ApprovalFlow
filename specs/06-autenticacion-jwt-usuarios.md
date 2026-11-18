@@ -1,6 +1,6 @@
 # SPEC 06 — Autenticación JWT, login, UsersController y autorización por rol
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** SPEC 04, SPEC 05
 > **Fecha:** 2026-11-18
 > **Objetivo:** Emitir tokens JWT desde `POST /api/auth/login`, validarlos en la API y exponer `UsersController` protegido por rol (Admin para la gestión, cualquier autenticado para `/me`), con seed del primer Admin y Swagger con Bearer en Development.
@@ -209,32 +209,32 @@ Lee el claim `sub` y lo convierte a `Guid`. Si falta o no es válido → `Unauth
 
 ## Criterios de aceptación
 
-- [ ] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
-- [ ] `ApprovalFlow.Application.csproj` no referencia ASP.NET Core, JwtBearer, `Microsoft.IdentityModel.*`, Npgsql ni Infrastructure.
-- [ ] `ApprovalFlow.Domain.csproj` sigue sin `PackageReference` ni `ProjectReference`.
-- [ ] Ya no existen `WeatherForecastController.cs` ni `WeatherForecast.cs`.
-- [ ] Con `Jwt:Key` vacía o de menos de 32 bytes, la API no arranca (falla `ValidateOnStart`).
-- [ ] `JwtTokenGenerator.Generate` produce un token válido con el issuer, audience y key configurados, con los claims `sub`, `email`, `name`, `role` y `jti`, y `ExpiresAt` ≈ ahora + `ExpirationMinutes`.
-- [ ] El claim `department_id` aparece solo si el usuario tiene departamento.
-- [ ] `AuthUseCase.LoginAsync` con credenciales correctas devuelve token, `ExpiresAt` y `UserDto`. El email se compara sin importar mayúsculas ni espacios.
-- [ ] `LoginAsync` con email inexistente, contraseña incorrecta o usuario inactivo lanza `UnauthorizedException` con el mensaje `"Credenciales inválidas."` en los tres casos.
-- [ ] `ChangeRoleAsync` y `DeactivateAsync` con `id == currentUserId` lanzan `ForbiddenException` y no modifican al usuario.
-- [ ] `ChangeOwnPasswordAsync` con contraseña actual incorrecta lanza `ArgumentException`. Con la correcta, la nueva verifica y la anterior no.
-- [ ] `POST /api/auth/login` correcto → 200 con `accessToken`, `expiresAt` y `user`, y `user` no contiene `passwordHash`.
-- [ ] `POST /api/auth/login` incorrecto → 401 `application/problem+json` con `title` `"No autenticado"`.
-- [ ] `POST /api/auth/login` sin `email` → 400 `ValidationProblemDetails`.
-- [ ] Cualquier endpoint de `/api/users` sin token o con token inválido/expirado → 401 `ProblemDetails`.
-- [ ] Endpoints Admin de `/api/users` con token de `Requester` → 403 `ProblemDetails` con `title` `"Acceso denegado"`.
-- [ ] `GET /api/users/me` con token de cualquier rol → 200 con el usuario del token.
-- [ ] `PUT /api/users/me/password` correcto → 204, y el login posterior funciona con la nueva contraseña.
-- [ ] `POST /api/users` como Admin → 201 con cabecera `Location` hacia `GET /api/users/{id}`.
-- [ ] `POST /api/users` con `password` de 3 caracteres → 400 `ValidationProblemDetails`.
-- [ ] `POST /api/users/{id}/deactivate` sobre el propio Admin → 403.
-- [ ] Con `SeedAdmin` configurado y sin Admins en la BD, al arrancar se crea un Admin activo con ese email. Al arrancar de nuevo no se crea otro.
-- [ ] Con `SeedAdmin` vacío, el arranque no crea usuarios ni falla.
-- [ ] En Development, `/swagger` carga y muestra el botón Authorize con esquema Bearer. Fuera de Development, `/swagger` responde 404.
-- [ ] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas (unitarias e integración).
-- [ ] `dotnet run --project ApprovalFlow/ApprovalFlow.Api.csproj` arranca sin excepciones.
+- [x] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
+- [x] `ApprovalFlow.Application.csproj` no referencia ASP.NET Core, JwtBearer, `Microsoft.IdentityModel.*`, Npgsql ni Infrastructure.
+- [x] `ApprovalFlow.Domain.csproj` sigue sin `PackageReference` ni `ProjectReference`.
+- [x] Ya no existen `WeatherForecastController.cs` ni `WeatherForecast.cs`.
+- [x] Con `Jwt:Key` vacía o de menos de 32 bytes, la API no arranca (falla `ValidateOnStart`).
+- [x] `JwtTokenGenerator.Generate` produce un token válido con el issuer, audience y key configurados, con los claims `sub`, `email`, `name`, `role` y `jti`, y `ExpiresAt` ≈ ahora + `ExpirationMinutes`.
+- [x] El claim `department_id` aparece solo si el usuario tiene departamento.
+- [x] `AuthUseCase.LoginAsync` con credenciales correctas devuelve token, `ExpiresAt` y `UserDto`. El email se compara sin importar mayúsculas ni espacios.
+- [x] `LoginAsync` con email inexistente, contraseña incorrecta o usuario inactivo lanza `UnauthorizedException` con el mensaje `"Credenciales inválidas."` en los tres casos.
+- [x] `ChangeRoleAsync` y `DeactivateAsync` con `id == currentUserId` lanzan `ForbiddenException` y no modifican al usuario.
+- [x] `ChangeOwnPasswordAsync` con contraseña actual incorrecta lanza `ArgumentException`. Con la correcta, la nueva verifica y la anterior no.
+- [x] `POST /api/auth/login` correcto → 200 con `accessToken`, `expiresAt` y `user`, y `user` no contiene `passwordHash`.
+- [x] `POST /api/auth/login` incorrecto → 401 `application/problem+json` con `title` `"No autenticado"`.
+- [x] `POST /api/auth/login` sin `email` → 400 `ValidationProblemDetails`.
+- [x] Cualquier endpoint de `/api/users` sin token o con token inválido/expirado → 401 `ProblemDetails`.
+- [x] Endpoints Admin de `/api/users` con token de `Requester` → 403 `ProblemDetails` con `title` `"Acceso denegado"`.
+- [x] `GET /api/users/me` con token de cualquier rol → 200 con el usuario del token.
+- [x] `PUT /api/users/me/password` correcto → 204, y el login posterior funciona con la nueva contraseña.
+- [x] `POST /api/users` como Admin → 201 con cabecera `Location` hacia `GET /api/users/{id}`.
+- [x] `POST /api/users` con `password` de 3 caracteres → 400 `ValidationProblemDetails`.
+- [x] `POST /api/users/{id}/deactivate` sobre el propio Admin → 403.
+- [x] Con `SeedAdmin` configurado y sin Admins en la BD, al arrancar se crea un Admin activo con ese email. Al arrancar de nuevo no se crea otro.
+- [x] Con `SeedAdmin` vacío, el arranque no crea usuarios ni falla.
+- [x] En Development, `/swagger` carga y muestra el botón Authorize con esquema Bearer. Fuera de Development, `/swagger` responde 404.
+- [x] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas (unitarias e integración).
+- [x] `dotnet run --project ApprovalFlow/ApprovalFlow.Api.csproj` arranca sin excepciones.
 
 ## Decisiones
 
