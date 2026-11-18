@@ -164,7 +164,7 @@ public class UserUseCaseTests
         var created = await SeedUserAsync();
 
         var result = await _useCase.ChangeRoleAsync(created.Id,
-            new ChangeUserRoleDto { Role = UserRole.Admin, DepartmentId = null });
+            new ChangeUserRoleDto { Role = UserRole.Admin, DepartmentId = null }, Guid.NewGuid());
 
         Assert.Equal(UserRole.Admin, result.Role);
         Assert.Null(result.DepartmentId);
@@ -177,7 +177,7 @@ public class UserUseCaseTests
     {
         var created = await SeedUserAsync();
 
-        await _useCase.DeactivateAsync(created.Id);
+        await _useCase.DeactivateAsync(created.Id, Guid.NewGuid());
 
         var user = await _useCase.GetByIdAsync(created.Id);
         Assert.False(user.IsActive);
@@ -188,7 +188,7 @@ public class UserUseCaseTests
     public async Task ActivateAsync_DejaIsActiveEnTrueYActualizaUpdatedAt()
     {
         var created = await SeedUserAsync();
-        await _useCase.DeactivateAsync(created.Id);
+        await _useCase.DeactivateAsync(created.Id, Guid.NewGuid());
         var deactivatedAt = (await _useCase.GetByIdAsync(created.Id)).UpdatedAt;
         await Task.Delay(5);
 
@@ -226,7 +226,7 @@ public class UserUseCaseTests
     public async Task ChangeRoleAsync_ConIdInexistente_LanzaNotFoundException()
     {
         await Assert.ThrowsAsync<NotFoundException>(() => _useCase.ChangeRoleAsync(Guid.NewGuid(),
-            new ChangeUserRoleDto { Role = UserRole.Admin }));
+            new ChangeUserRoleDto { Role = UserRole.Admin }, Guid.NewGuid()));
     }
 
     [Fact]
@@ -238,7 +238,7 @@ public class UserUseCaseTests
     [Fact]
     public async Task DeactivateAsync_ConIdInexistente_LanzaNotFoundException()
     {
-        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.DeactivateAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.DeactivateAsync(Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
