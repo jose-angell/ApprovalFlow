@@ -164,7 +164,7 @@ public class UserUseCaseTests
         var created = await SeedUserAsync();
 
         var result = await _useCase.ChangeRoleAsync(created.Id,
-            new ChangeUserRoleDto { Role = UserRole.Admin, DepartmentId = null });
+            new ChangeUserRoleDto { Role = UserRole.Admin, DepartmentId = null }, Guid.NewGuid());
 
         Assert.Equal(UserRole.Admin, result.Role);
         Assert.Null(result.DepartmentId);
@@ -177,7 +177,7 @@ public class UserUseCaseTests
     {
         var created = await SeedUserAsync();
 
-        await _useCase.DeactivateAsync(created.Id);
+        await _useCase.DeactivateAsync(created.Id, Guid.NewGuid());
 
         var user = await _useCase.GetByIdAsync(created.Id);
         Assert.False(user.IsActive);
@@ -188,7 +188,7 @@ public class UserUseCaseTests
     public async Task ActivateAsync_DejaIsActiveEnTrueYActualizaUpdatedAt()
     {
         var created = await SeedUserAsync();
-        await _useCase.DeactivateAsync(created.Id);
+        await _useCase.DeactivateAsync(created.Id, Guid.NewGuid());
         var deactivatedAt = (await _useCase.GetByIdAsync(created.Id)).UpdatedAt;
         await Task.Delay(5);
 
@@ -213,6 +213,78 @@ public class UserUseCaseTests
         Assert.False(_hasher.Verify(saved.PasswordHash, "Secreta123"));
     }
 
+    // Autoprotección (ChangeRoleAsync / DeactivateAsync sobre uno mismo)
+
+    [Fact]
+    public async Task ChangeRoleAsync_SobreSiMismo_LanzaForbiddenExceptionYNoModificaAlUsuario()
+    {
+        var created = await SeedUserAsync();
+
+        var ex = await Assert.ThrowsAsync<ForbiddenException>(() => _useCase.ChangeRoleAsync(created.Id,
+            new ChangeUserRoleDto { Role = UserRole.Admin, DepartmentId = null }, created.Id));
+
+        Assert.Equal("No puedes cambiar tu propio rol.", ex.Message);
+        var saved = await _context.Users.AsNoTracking().SingleAsync(u => u.Id == created.Id);
+        Assert.Equal(UserRole.Requester, saved.Role);
+    }
+
+    [Fact]
+    public async Task DeactivateAsync_SobreSiMismo_LanzaForbiddenExceptionYNoModificaAlUsuario()
+    {
+        var created = await SeedUserAsync();
+
+        var ex = await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _useCase.DeactivateAsync(created.Id, created.Id));
+
+        Assert.Equal("No puedes desactivar tu propio usuario.", ex.Message);
+        var saved = await _context.Users.AsNoTracking().SingleAsync(u => u.Id == created.Id);
+        Assert.True(saved.IsActive);
+    }
+
+    [Fact]
+    public async Task ChangeRoleAsync_SobreSiMismo_NoBuscaAlUsuario()
+    {
+        var id = Guid.NewGuid();
+
+        await Assert.ThrowsAsync<ForbiddenException>(() => _useCase.ChangeRoleAsync(id,
+            new ChangeUserRoleDto { Role = UserRole.Admin }, id));
+    }
+
+    // ChangeOwnPasswordAsync
+
+    [Fact]
+    public async Task ChangeOwnPasswordAsync_ConContrasenaActualCorrecta_CambiaElHash()
+    {
+        var created = await SeedUserAsync();
+
+        await _useCase.ChangeOwnPasswordAsync(created.Id,
+            new ChangeOwnPasswordDto { CurrentPassword = "Secreta123", NewPassword = "NuevaClave456" });
+
+        var saved = await _context.Users.AsNoTracking().SingleAsync(u => u.Id == created.Id);
+        Assert.True(_hasher.Verify(saved.PasswordHash, "NuevaClave456"));
+        Assert.False(_hasher.Verify(saved.PasswordHash, "Secreta123"));
+    }
+
+    [Fact]
+    public async Task ChangeOwnPasswordAsync_ConContrasenaActualIncorrecta_LanzaArgumentExceptionYNoCambiaElHash()
+    {
+        var created = await SeedUserAsync();
+
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => _useCase.ChangeOwnPasswordAsync(created.Id,
+            new ChangeOwnPasswordDto { CurrentPassword = "Incorrecta999", NewPassword = "NuevaClave456" }));
+
+        Assert.Equal("La contraseña actual no es correcta.", ex.Message);
+        var saved = await _context.Users.AsNoTracking().SingleAsync(u => u.Id == created.Id);
+        Assert.True(_hasher.Verify(saved.PasswordHash, "Secreta123"));
+    }
+
+    [Fact]
+    public async Task ChangeOwnPasswordAsync_ConIdInexistente_LanzaNotFoundException()
+    {
+        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.ChangeOwnPasswordAsync(Guid.NewGuid(),
+            new ChangeOwnPasswordDto { CurrentPassword = "Secreta123", NewPassword = "NuevaClave456" }));
+    }
+
     // Usuario inexistente
 
     [Fact]
@@ -226,7 +298,7 @@ public class UserUseCaseTests
     public async Task ChangeRoleAsync_ConIdInexistente_LanzaNotFoundException()
     {
         await Assert.ThrowsAsync<NotFoundException>(() => _useCase.ChangeRoleAsync(Guid.NewGuid(),
-            new ChangeUserRoleDto { Role = UserRole.Admin }));
+            new ChangeUserRoleDto { Role = UserRole.Admin }, Guid.NewGuid()));
     }
 
     [Fact]
@@ -238,7 +310,7 @@ public class UserUseCaseTests
     [Fact]
     public async Task DeactivateAsync_ConIdInexistente_LanzaNotFoundException()
     {
-        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.DeactivateAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.DeactivateAsync(Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]

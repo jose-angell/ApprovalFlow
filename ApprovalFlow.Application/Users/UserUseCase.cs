@@ -52,8 +52,12 @@ public class UserUseCase(IApplicationDbContext context, IPasswordHasher password
         return UserDto.FromEntity(user);
     }
 
-    public async Task<UserDto> ChangeRoleAsync(Guid id, ChangeUserRoleDto dto, CancellationToken ct = default)
+    public async Task<UserDto> ChangeRoleAsync(
+        Guid id, ChangeUserRoleDto dto, Guid currentUserId, CancellationToken ct = default)
     {
+        if (id == currentUserId)
+            throw new ForbiddenException("No puedes cambiar tu propio rol.");
+
         var user = await GetTrackedUserAsync(id, ct);
         var department = await ResolveDepartmentAsync(dto.DepartmentId, ct);
 
@@ -71,8 +75,11 @@ public class UserUseCase(IApplicationDbContext context, IPasswordHasher password
         await _context.SaveChangesAsync(ct);
     }
 
-    public async Task DeactivateAsync(Guid id, CancellationToken ct = default)
+    public async Task DeactivateAsync(Guid id, Guid currentUserId, CancellationToken ct = default)
     {
+        if (id == currentUserId)
+            throw new ForbiddenException("No puedes desactivar tu propio usuario.");
+
         var user = await GetTrackedUserAsync(id, ct);
 
         user.Deactivate();
@@ -85,6 +92,17 @@ public class UserUseCase(IApplicationDbContext context, IPasswordHasher password
         var passwordHash = _passwordHasher.Hash(dto.NewPassword);
 
         user.ChangePasswordHash(passwordHash);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task ChangeOwnPasswordAsync(Guid userId, ChangeOwnPasswordDto dto, CancellationToken ct = default)
+    {
+        var user = await GetTrackedUserAsync(userId, ct);
+
+        if (!_passwordHasher.Verify(user.PasswordHash, dto.CurrentPassword))
+            throw new ArgumentException("La contraseña actual no es correcta.");
+
+        user.ChangePasswordHash(_passwordHasher.Hash(dto.NewPassword));
         await _context.SaveChangesAsync(ct);
     }
 
