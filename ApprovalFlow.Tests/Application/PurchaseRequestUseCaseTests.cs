@@ -304,4 +304,250 @@ public class PurchaseRequestUseCaseTests
     {
         await Assert.ThrowsAsync<NotFoundException>(() => _useCase.GetByIdAsync(Guid.NewGuid(), Guid.NewGuid()));
     }
+
+    // Escenario común: Requester y Approver en el mismo departamento con una solicitud Pending.
+    private async Task<(User Requester, User Approver, PurchaseRequestDto Request)> SetupPendingAsync()
+    {
+        var department = await AddDepartmentAsync();
+        var requester = await AddUserAsync(UserRole.Requester, department);
+        var approver = await AddUserAsync(UserRole.Approver, department);
+        var request = await CreateRequestAsync(requester);
+        return (requester, approver, request);
+    }
+
+    private async Task<(User Requester, User Approver, PurchaseRequestDto Request)> SetupInReviewAsync()
+    {
+        var (requester, approver, request) = await SetupPendingAsync();
+        var inReview = await _useCase.StartReviewAsync(request.Id, approver.Id);
+        return (requester, approver, inReview);
+    }
+
+    // UpdateAsync
+
+    [Fact]
+    public async Task UpdateAsync_DelDuenoEnPending_CambiaCamposYFijaUpdatedAt()
+    {
+        var (requester, _, request) = await SetupPendingAsync();
+
+        var result = await _useCase.UpdateAsync(request.Id, requester.Id, new UpdatePurchaseRequestDto
+        {
+            Title = "  Monitores  ",
+            Justification = "Nuevos monitores",
+            TotalAmount = 300m
+        });
+
+        Assert.Equal("Monitores", result.Title);
+        Assert.Equal("Nuevos monitores", result.Justification);
+        Assert.Equal(300m, result.TotalAmount);
+        Assert.NotNull(result.UpdatedAt);
+        var saved = await GetSavedAsync(request.Id);
+        Assert.Equal("Monitores", saved.Title);
+        Assert.Equal(300m, saved.TotalAmount);
+        Assert.NotNull(saved.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ConMontoInvalido_LanzaArgumentException()
+    {
+        var (requester, _, request) = await SetupPendingAsync();
+
+        await Assert.ThrowsAsync<ArgumentException>(() => _useCase.UpdateAsync(request.Id, requester.Id, new UpdatePurchaseRequestDto
+        {
+            Title = "Monitores",
+            Justification = "Nuevos monitores",
+            TotalAmount = 0m
+        }));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_EnEstadoDistintoDePending_LanzaInvalidOperationException()
+    {
+        var (requester, _, request) = await SetupInReviewAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.UpdateAsync(request.Id, requester.Id, new UpdatePurchaseRequestDto
+        {
+            Title = "Monitores",
+            Justification = "Nuevos monitores",
+            TotalAmount = 300m
+        }));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DeOtroRequester_LanzaNotFoundException()
+    {
+        var (_, _, request) = await SetupPendingAsync();
+        var other = await AddUserAsync(UserRole.Requester, await AddDepartmentAsync("Ventas"));
+
+        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.UpdateAsync(request.Id, other.Id, new UpdatePurchaseRequestDto
+        {
+            Title = "Monitores",
+            Justification = "Nuevos monitores",
+            TotalAmount = 300m
+        }));
+    }
+
+    // CancelAsync
+
+    [Fact]
+    public async Task CancelAsync_DelDuenoEnPending_DejaCancelledConCancelledById()
+    {
+        var (requester, _, request) = await SetupPendingAsync();
+
+        var result = await _useCase.CancelAsync(request.Id, requester.Id);
+
+        Assert.Equal(PurchaseRequestStatus.Cancelled, result.Status);
+        Assert.Equal(requester.Id, result.CancelledById);
+        Assert.NotNull(result.CancelledAt);
+        var saved = await GetSavedAsync(request.Id);
+        Assert.Equal(PurchaseRequestStatus.Cancelled, saved.Status);
+        Assert.Equal(requester.Id, saved.CancelledById);
+    }
+
+    [Fact]
+    public async Task CancelAsync_EnEstadoDistintoDePending_LanzaInvalidOperationException()
+    {
+        var (requester, _, request) = await SetupInReviewAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.CancelAsync(request.Id, requester.Id));
+    }
+
+    [Fact]
+    public async Task CancelAsync_DeOtroRequester_LanzaNotFoundException()
+    {
+        var (_, _, request) = await SetupPendingAsync();
+        var other = await AddUserAsync(UserRole.Requester, await AddDepartmentAsync("Ventas"));
+
+        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.CancelAsync(request.Id, other.Id));
+    }
+
+    // StartReviewAsync
+
+    [Fact]
+    public async Task StartReviewAsync_ConApproverDelDepartamento_DejaInReviewConReviewedById()
+    {
+        var (_, approver, request) = await SetupPendingAsync();
+
+        var result = await _useCase.StartReviewAsync(request.Id, approver.Id);
+
+        Assert.Equal(PurchaseRequestStatus.InReview, result.Status);
+        Assert.Equal(approver.Id, result.ReviewedById);
+        Assert.NotNull(result.ReviewedAt);
+        var saved = await GetSavedAsync(request.Id);
+        Assert.Equal(PurchaseRequestStatus.InReview, saved.Status);
+        Assert.Equal(approver.Id, saved.ReviewedById);
+    }
+
+    [Fact]
+    public async Task StartReviewAsync_ConApproverDeOtroDepartamento_LanzaNotFoundException()
+    {
+        var (_, _, request) = await SetupPendingAsync();
+        var otherApprover = await AddUserAsync(UserRole.Approver, await AddDepartmentAsync("Ventas"));
+
+        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.StartReviewAsync(request.Id, otherApprover.Id));
+    }
+
+    [Fact]
+    public async Task StartReviewAsync_ConApproverInactivo_LanzaInvalidOperationException()
+    {
+        var (_, approver, request) = await SetupPendingAsync();
+        approver.Deactivate();
+        await _context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.StartReviewAsync(request.Id, approver.Id));
+    }
+
+    [Fact]
+    public async Task StartReviewAsync_ConRequesterDueno_LanzaInvalidOperationException()
+    {
+        var (requester, _, request) = await SetupPendingAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.StartReviewAsync(request.Id, requester.Id));
+    }
+
+    [Fact]
+    public async Task StartReviewAsync_EnEstadoDistintoDePending_LanzaInvalidOperationException()
+    {
+        var (_, approver, request) = await SetupInReviewAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.StartReviewAsync(request.Id, approver.Id));
+    }
+
+    // ApproveAsync
+
+    [Fact]
+    public async Task ApproveAsync_EnInReviewSinComentario_DejaApprovedConCommentsNull()
+    {
+        var (_, approver, request) = await SetupInReviewAsync();
+
+        var result = await _useCase.ApproveAsync(request.Id, approver.Id, new ApprovePurchaseRequestDto());
+
+        Assert.Equal(PurchaseRequestStatus.Approved, result.Status);
+        Assert.Equal(approver.Id, result.ApprovedById);
+        Assert.NotNull(result.ApprovedAt);
+        Assert.Null(result.Comments);
+        var saved = await GetSavedAsync(request.Id);
+        Assert.Equal(PurchaseRequestStatus.Approved, saved.Status);
+        Assert.Null(saved.Comments);
+    }
+
+    [Fact]
+    public async Task ApproveAsync_ConComentario_GuardaElComentarioRecortado()
+    {
+        var (_, approver, request) = await SetupInReviewAsync();
+
+        var result = await _useCase.ApproveAsync(request.Id, approver.Id, new ApprovePurchaseRequestDto { Comments = "  Aprobada  " });
+
+        Assert.Equal("Aprobada", result.Comments);
+    }
+
+    [Fact]
+    public async Task ApproveAsync_EnPending_LanzaInvalidOperationException()
+    {
+        var (_, approver, request) = await SetupPendingAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.ApproveAsync(request.Id, approver.Id, new ApprovePurchaseRequestDto()));
+    }
+
+    [Fact]
+    public async Task ApproveAsync_ConApproverDeOtroDepartamento_LanzaNotFoundException()
+    {
+        var (_, _, request) = await SetupInReviewAsync();
+        var otherApprover = await AddUserAsync(UserRole.Approver, await AddDepartmentAsync("Ventas"));
+
+        await Assert.ThrowsAsync<NotFoundException>(() => _useCase.ApproveAsync(request.Id, otherApprover.Id, new ApprovePurchaseRequestDto()));
+    }
+
+    // RejectAsync
+
+    [Fact]
+    public async Task RejectAsync_EnInReview_DejaRejectedConRejectedByIdYComentarioRecortado()
+    {
+        var (_, approver, request) = await SetupInReviewAsync();
+
+        var result = await _useCase.RejectAsync(request.Id, approver.Id, new RejectPurchaseRequestDto { Comments = "  Sin presupuesto  " });
+
+        Assert.Equal(PurchaseRequestStatus.Rejected, result.Status);
+        Assert.Equal(approver.Id, result.RejectedById);
+        Assert.NotNull(result.RejectedAt);
+        Assert.Equal("Sin presupuesto", result.Comments);
+        var saved = await GetSavedAsync(request.Id);
+        Assert.Equal(PurchaseRequestStatus.Rejected, saved.Status);
+        Assert.Equal("Sin presupuesto", saved.Comments);
+    }
+
+    [Fact]
+    public async Task RejectAsync_EnPending_LanzaInvalidOperationException()
+    {
+        var (_, approver, request) = await SetupPendingAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.RejectAsync(request.Id, approver.Id, new RejectPurchaseRequestDto { Comments = "No" }));
+    }
+
+    [Fact]
+    public async Task RejectAsync_ConComentarioVacio_LanzaArgumentException()
+    {
+        var (_, approver, request) = await SetupInReviewAsync();
+
+        await Assert.ThrowsAsync<ArgumentException>(() => _useCase.RejectAsync(request.Id, approver.Id, new RejectPurchaseRequestDto { Comments = "   " }));
+    }
 }
