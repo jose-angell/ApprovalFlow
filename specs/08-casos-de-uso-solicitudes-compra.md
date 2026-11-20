@@ -1,6 +1,6 @@
 # SPEC 08 — Casos de uso y controller de solicitudes de compra
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** SPEC 02, SPEC 03, SPEC 04, SPEC 05, SPEC 06, SPEC 07
 > **Fecha:** 2026-11-20
 > **Objetivo:** Crear `PurchaseRequestUseCase` (crear, consultar, listar, editar, cancelar, iniciar revisión, aprobar y rechazar) con sus DTOs en `ApprovalFlow.Application/PurchaseRequests` y exponerlo en `PurchaseRequestsController` (`/api/purchase-requests`), con visibilidad y acciones según el rol del usuario.
@@ -112,39 +112,39 @@ Reglas comunes:
 
 ## Criterios de aceptación
 
-- [ ] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
-- [ ] Existen `IPurchaseRequestUseCase.cs` en `Abstractions/UseCases/`, `PurchaseRequestUseCase.cs` en `PurchaseRequests/`, los cinco DTOs en `PurchaseRequests/Dtos/` y `PurchaseRequestsController.cs`.
-- [ ] `IPurchaseRequestUseCase` se resuelve desde el contenedor de la API.
-- [ ] Los DTOs de entrada tienen las DataAnnotations de la tabla.
-- [ ] `CreateAsync` de un Requester activo con departamento guarda la solicitud en `Pending`, con su `RequesterId` y `DepartmentId`.
-- [ ] La primera solicitud del año recibe `PR-{yyyy}-000001` y la segunda `PR-{yyyy}-000002`.
-- [ ] `CreateAsync` con `TotalAmount` 0 o con 3 decimales lanza `ArgumentException`.
-- [ ] `CreateAsync` de un Requester sin departamento o inactivo lanza `InvalidOperationException`.
-- [ ] `CreateAsync` con un `userId` inexistente lanza `NotFoundException`.
-- [ ] `GetAllAsync` como Requester devuelve solo sus solicitudes.
-- [ ] `GetAllAsync` como Approver devuelve solo las de su departamento.
-- [ ] `GetAllAsync` como Finance y como Admin devuelve todas.
-- [ ] `GetAllAsync` con `status` devuelve solo las de ese estado, ordenadas por `CreatedAt` descendente.
-- [ ] `GetByIdAsync` de una solicitud ajena (otro Requester u otro departamento) o inexistente lanza `NotFoundException`.
-- [ ] `UpdateAsync` del dueño en `Pending` cambia título, justificación y monto y fija `UpdatedAt`.
-- [ ] `UpdateAsync` y `CancelAsync` en estado distinto de `Pending` lanzan `InvalidOperationException`.
-- [ ] `CancelAsync` del dueño en `Pending` deja `Cancelled` con `CancelledById`.
-- [ ] `StartReviewAsync` de un Approver del departamento deja `InReview` con `ReviewedById`.
-- [ ] `ApproveAsync` en `InReview` deja `Approved` con `ApprovedById`. Sin comentario, `Comments` queda `null`.
-- [ ] `RejectAsync` en `InReview` deja `Rejected` con `RejectedById` y el comentario recortado.
-- [ ] `ApproveAsync` y `RejectAsync` en `Pending` lanzan `InvalidOperationException`.
-- [ ] `GET /api/purchase-requests` sin token → 401 `ProblemDetails`.
-- [ ] `POST /api/purchase-requests` como Requester → 201 con cabecera `Location` y el `PurchaseRequestDto`.
-- [ ] `POST /api/purchase-requests` como Approver, Finance o Admin → 403 `ProblemDetails`.
-- [ ] `POST /api/purchase-requests` con `Title` vacío → 400 (DataAnnotations). Con `TotalAmount` 0 → 400 (dominio).
-- [ ] `start-review`, `approve` y `reject` como Requester → 403 `ProblemDetails`.
-- [ ] `GET /api/purchase-requests/{id}` de una solicitud de otro Requester → 404 `ProblemDetails`.
-- [ ] Flujo completo vía HTTP: Requester crea → Approver del mismo departamento `start-review` → `approve` → 200 con `Status` 3.
-- [ ] `reject` sin `Comments` → 400. `approve` sobre una solicitud `Pending` → 409 `ProblemDetails`.
-- [ ] `start-review` por un Approver de otro departamento → 404.
-- [ ] `PUT` y `cancel` del dueño sobre una solicitud `InReview` → 409.
-- [ ] `GET /api/purchase-requests?status=1` como Finance devuelve solo solicitudes `Pending`.
-- [ ] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas.
+- [x] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
+- [x] Existen `IPurchaseRequestUseCase.cs` en `Abstractions/UseCases/`, `PurchaseRequestUseCase.cs` en `PurchaseRequests/`, los cinco DTOs en `PurchaseRequests/Dtos/` y `PurchaseRequestsController.cs`.
+- [x] `IPurchaseRequestUseCase` se resuelve desde el contenedor de la API.
+- [x] Los DTOs de entrada tienen las DataAnnotations de la tabla.
+- [x] `CreateAsync` de un Requester activo con departamento guarda la solicitud en `Pending`, con su `RequesterId` y `DepartmentId`.
+- [x] La primera solicitud del año recibe `PR-{yyyy}-000001` y la segunda `PR-{yyyy}-000002`.
+- [x] `CreateAsync` con `TotalAmount` 0 o con 3 decimales lanza `ArgumentException`.
+- [x] `CreateAsync` de un Requester sin departamento o inactivo lanza `InvalidOperationException`.
+- [x] `CreateAsync` con un `userId` inexistente lanza `NotFoundException`.
+- [x] `GetAllAsync` como Requester devuelve solo sus solicitudes.
+- [x] `GetAllAsync` como Approver devuelve solo las de su departamento.
+- [x] `GetAllAsync` como Finance y como Admin devuelve todas.
+- [x] `GetAllAsync` con `status` devuelve solo las de ese estado, ordenadas por `CreatedAt` descendente.
+- [x] `GetByIdAsync` de una solicitud ajena (otro Requester u otro departamento) o inexistente lanza `NotFoundException`.
+- [x] `UpdateAsync` del dueño en `Pending` cambia título, justificación y monto y fija `UpdatedAt`.
+- [x] `UpdateAsync` y `CancelAsync` en estado distinto de `Pending` lanzan `InvalidOperationException`.
+- [x] `CancelAsync` del dueño en `Pending` deja `Cancelled` con `CancelledById`.
+- [x] `StartReviewAsync` de un Approver del departamento deja `InReview` con `ReviewedById`.
+- [x] `ApproveAsync` en `InReview` deja `Approved` con `ApprovedById`. Sin comentario, `Comments` queda `null`.
+- [x] `RejectAsync` en `InReview` deja `Rejected` con `RejectedById` y el comentario recortado.
+- [x] `ApproveAsync` y `RejectAsync` en `Pending` lanzan `InvalidOperationException`.
+- [x] `GET /api/purchase-requests` sin token → 401 `ProblemDetails`.
+- [x] `POST /api/purchase-requests` como Requester → 201 con cabecera `Location` y el `PurchaseRequestDto`.
+- [x] `POST /api/purchase-requests` como Approver, Finance o Admin → 403 `ProblemDetails`.
+- [x] `POST /api/purchase-requests` con `Title` vacío → 400 (DataAnnotations). Con `TotalAmount` 0 → 400 (dominio).
+- [x] `start-review`, `approve` y `reject` como Requester → 403 `ProblemDetails`.
+- [x] `GET /api/purchase-requests/{id}` de una solicitud de otro Requester → 404 `ProblemDetails`.
+- [x] Flujo completo vía HTTP: Requester crea → Approver del mismo departamento `start-review` → `approve` → 200 con `Status` 3.
+- [x] `reject` sin `Comments` → 400. `approve` sobre una solicitud `Pending` → 409 `ProblemDetails`.
+- [x] `start-review` por un Approver de otro departamento → 404.
+- [x] `PUT` y `cancel` del dueño sobre una solicitud `InReview` → 409.
+- [x] `GET /api/purchase-requests?status=1` como Finance devuelve solo solicitudes `Pending`.
+- [x] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas.
 
 ## Decisiones
 
