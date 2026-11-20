@@ -49,6 +49,28 @@ public class PurchaseRequestUseCase(IApplicationDbContext context) : IPurchaseRe
         return requests.Select(PurchaseRequestDto.FromEntity).ToList();
     }
 
+    public async Task<PurchaseRequestDto> UpdateAsync(Guid id, Guid userId, UpdatePurchaseRequestDto dto, CancellationToken ct = default)
+    {
+        var user = await GetActingUserAsync(userId, ct);
+        var request = await GetVisibleTrackedAsync(id, user, ct);
+
+        request.Update(user, dto.Title, dto.Justification, dto.TotalAmount);
+        await _context.SaveChangesAsync(ct);
+
+        return PurchaseRequestDto.FromEntity(request);
+    }
+
+    public async Task<PurchaseRequestDto> CancelAsync(Guid id, Guid userId, CancellationToken ct = default)
+    {
+        var user = await GetActingUserAsync(userId, ct);
+        var request = await GetVisibleTrackedAsync(id, user, ct);
+
+        request.Cancel(user);
+        await _context.SaveChangesAsync(ct);
+
+        return PurchaseRequestDto.FromEntity(request);
+    }
+
     private async Task<User> GetActingUserAsync(Guid userId, CancellationToken ct)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, ct)
