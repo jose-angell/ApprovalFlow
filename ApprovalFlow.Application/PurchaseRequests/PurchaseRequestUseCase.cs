@@ -71,6 +71,39 @@ public class PurchaseRequestUseCase(IApplicationDbContext context) : IPurchaseRe
         return PurchaseRequestDto.FromEntity(request);
     }
 
+    public async Task<PurchaseRequestDto> StartReviewAsync(Guid id, Guid userId, CancellationToken ct = default)
+    {
+        var user = await GetActingUserAsync(userId, ct);
+        var request = await GetVisibleTrackedAsync(id, user, ct);
+
+        request.StartReview(user);
+        await _context.SaveChangesAsync(ct);
+
+        return PurchaseRequestDto.FromEntity(request);
+    }
+
+    public async Task<PurchaseRequestDto> ApproveAsync(Guid id, Guid userId, ApprovePurchaseRequestDto dto, CancellationToken ct = default)
+    {
+        var user = await GetActingUserAsync(userId, ct);
+        var request = await GetVisibleTrackedAsync(id, user, ct);
+
+        request.Approve(user, dto.Comments);
+        await _context.SaveChangesAsync(ct);
+
+        return PurchaseRequestDto.FromEntity(request);
+    }
+
+    public async Task<PurchaseRequestDto> RejectAsync(Guid id, Guid userId, RejectPurchaseRequestDto dto, CancellationToken ct = default)
+    {
+        var user = await GetActingUserAsync(userId, ct);
+        var request = await GetVisibleTrackedAsync(id, user, ct);
+
+        request.Reject(user, dto.Comments);
+        await _context.SaveChangesAsync(ct);
+
+        return PurchaseRequestDto.FromEntity(request);
+    }
+
     private async Task<User> GetActingUserAsync(Guid userId, CancellationToken ct)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, ct)
