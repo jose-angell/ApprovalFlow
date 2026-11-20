@@ -38,6 +38,43 @@ public class DepartmentUseCase(IApplicationDbContext context) : IDepartmentUseCa
         return departments.Select(DepartmentDto.FromEntity).ToList();
     }
 
+    public async Task<DepartmentDto> UpdateAsync(Guid id, UpdateDepartmentDto dto, CancellationToken ct = default)
+    {
+        var department = await GetTrackedDepartmentAsync(id, ct);
+        await EnsureNameIsUniqueAsync(dto.Name, id, ct);
+
+        department.Update(dto.Name, dto.Description);
+        await _context.SaveChangesAsync(ct);
+
+        return DepartmentDto.FromEntity(department);
+    }
+
+    public async Task ActivateAsync(Guid id, CancellationToken ct = default)
+    {
+        var department = await GetTrackedDepartmentAsync(id, ct);
+
+        department.Activate();
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task DeactivateAsync(Guid id, CancellationToken ct = default)
+    {
+        var department = await GetTrackedDepartmentAsync(id, ct);
+
+        var hasActiveUsers = await _context.Users.AnyAsync(u => u.DepartmentId == id && u.IsActive, ct);
+        if (hasActiveUsers)
+            throw new ConflictException($"El departamento '{id}' tiene usuarios activos asignados.");
+
+        department.Deactivate();
+        await _context.SaveChangesAsync(ct);
+    }
+
+    private async Task<Department> GetTrackedDepartmentAsync(Guid id, CancellationToken ct)
+    {
+        return await _context.Departments.FirstOrDefaultAsync(d => d.Id == id, ct)
+            ?? throw new NotFoundException($"El departamento '{id}' no existe.");
+    }
+
     private async Task EnsureNameIsUniqueAsync(string name, Guid? excludeDepartmentId, CancellationToken ct)
     {
         var trimmed = (name ?? string.Empty).Trim();
