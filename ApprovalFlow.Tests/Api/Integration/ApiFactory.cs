@@ -48,14 +48,20 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     }
 
     public async Task<User> SeedUserAsync(
-        UserRole role, string email = "usuario@empresa.com", bool active = true, string password = UserPassword)
+        UserRole role, string email = "usuario@empresa.com", bool active = true, string password = UserPassword,
+        Guid? departmentId = null)
     {
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
         Department? department = null;
-        if (role != UserRole.Admin)
+        if (departmentId is not null)
+        {
+            // Departamento compartido: permite sembrar varios usuarios en el mismo departamento.
+            department = await context.Departments.SingleAsync(d => d.Id == departmentId);
+        }
+        else if (role != UserRole.Admin)
         {
             department = Department.Create($"Depto {Guid.NewGuid():N}", null);
             context.Departments.Add(department);
