@@ -43,3 +43,41 @@ Authorization: Bearer {{token}}
   "currentPassword": "Admin-Dev-123",
   "newPassword": "Nueva-Clave-456"
 }
+
+### Listar departamentos (cualquier usuario autenticado)
+GET {{ApprovalFlow_HostAddress}}/api/departments
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Obtener departamento por id (cualquier usuario autenticado)
+GET {{ApprovalFlow_HostAddress}}/api/departments/00000000-0000-0000-0000-000000000000
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Crear departamento (Admin)
+POST {{ApprovalFlow_HostAddress}}/api/departments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Compras",
+  "description": "Área de compras"
+}
+
+### Editar departamento (Admin)
+PUT {{ApprovalFlow_HostAddress}}/api/departments/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Adquisiciones",
+  "description": "Nueva descripción"
+}
+
+### Activar departamento (Admin)
+POST {{ApprovalFlow_HostAddress}}/api/departments/00000000-0000-0000-0000-000000000000/activate
+Authorization: Bearer {{token}}
+
+### Desactivar departamento (Admin). 409 si tiene usuarios activos
+POST {{ApprovalFlow_HostAddress}}/api/departments/00000000-0000-0000-0000-000000000000/deactivate
+Authorization: Bearer {{token}}

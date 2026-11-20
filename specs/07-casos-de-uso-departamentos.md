@@ -1,6 +1,6 @@
 # SPEC 07 — Casos de uso y controller de departamentos
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** SPEC 02, SPEC 03, SPEC 04, SPEC 05, SPEC 06
 > **Fecha:** 2026-11-19
 > **Objetivo:** Crear `DepartmentUseCase` (crear, consultar, listar, editar, activar y desactivar) con sus DTOs en `ApprovalFlow.Application/Departments` y exponerlo en `DepartmentsController` (`/api/departments`), con lectura para cualquier usuario autenticado y escritura solo para Admin.
@@ -92,29 +92,29 @@ Reglas comunes:
 
 ## Criterios de aceptación
 
-- [ ] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
-- [ ] Existen `IDepartmentUseCase.cs` en `Abstractions/UseCases/`, `DepartmentUseCase.cs` en `Departments/`, los tres DTOs en `Departments/Dtos/` y `DepartmentsController.cs`.
-- [ ] `IDepartmentUseCase` se resuelve desde el contenedor de la API.
-- [ ] `CreateDepartmentDto` y `UpdateDepartmentDto` tienen las DataAnnotations de la tabla.
-- [ ] `CreateAsync` con datos válidos guarda el departamento con `IsActive = true` y el nombre recortado.
-- [ ] `CreateAsync` con un nombre existente que difiere solo en mayúsculas o espacios lanza `ConflictException`.
-- [ ] `CreateAsync` con nombre vacío lanza `ArgumentException` (del dominio).
-- [ ] `GetByIdAsync` con un id inexistente lanza `NotFoundException`.
-- [ ] `GetAllAsync` devuelve activos e inactivos ordenados por `Name`.
-- [ ] `UpdateAsync` con el nombre de otro departamento lanza `ConflictException`. Con su propio nombre (aunque cambien las mayúsculas) no lanza.
-- [ ] `DeactivateAsync` sin usuarios activos deja `IsActive = false` y `ActivateAsync` lo vuelve a `true`.
-- [ ] `DeactivateAsync` con un usuario activo asignado lanza `ConflictException` y el departamento sigue activo.
-- [ ] `DeactivateAsync` con solo usuarios inactivos asignados desactiva el departamento.
-- [ ] `UpdateAsync`, `ActivateAsync` y `DeactivateAsync` con un id inexistente lanzan `NotFoundException`.
-- [ ] `GET /api/departments` sin token → 401 `ProblemDetails`.
-- [ ] `GET /api/departments` y `GET /api/departments/{id}` con token de `Requester` → 200.
-- [ ] `POST`, `PUT`, `activate` y `deactivate` con token de `Requester` → 403 `ProblemDetails`.
-- [ ] `POST /api/departments` como Admin → 201 con cabecera `Location` y el `DepartmentDto`.
-- [ ] `POST /api/departments` con `Name` vacío → 400 (DataAnnotations).
-- [ ] `POST /api/departments` con un nombre duplicado → 409 `ProblemDetails`.
-- [ ] `GET /api/departments/{id}` inexistente → 404 `ProblemDetails`.
-- [ ] `POST /api/departments/{id}/deactivate` con usuarios activos → 409. Sin usuarios activos → 204.
-- [ ] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas.
+- [x] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
+- [x] Existen `IDepartmentUseCase.cs` en `Abstractions/UseCases/`, `DepartmentUseCase.cs` en `Departments/`, los tres DTOs en `Departments/Dtos/` y `DepartmentsController.cs`.
+- [x] `IDepartmentUseCase` se resuelve desde el contenedor de la API.
+- [x] `CreateDepartmentDto` y `UpdateDepartmentDto` tienen las DataAnnotations de la tabla.
+- [x] `CreateAsync` con datos válidos guarda el departamento con `IsActive = true` y el nombre recortado.
+- [x] `CreateAsync` con un nombre existente que difiere solo en mayúsculas o espacios lanza `ConflictException`.
+- [x] `CreateAsync` con nombre vacío lanza `ArgumentException` (del dominio).
+- [x] `GetByIdAsync` con un id inexistente lanza `NotFoundException`.
+- [x] `GetAllAsync` devuelve activos e inactivos ordenados por `Name`.
+- [x] `UpdateAsync` con el nombre de otro departamento lanza `ConflictException`. Con su propio nombre (aunque cambien las mayúsculas) no lanza.
+- [x] `DeactivateAsync` sin usuarios activos deja `IsActive = false` y `ActivateAsync` lo vuelve a `true`.
+- [x] `DeactivateAsync` con un usuario activo asignado lanza `ConflictException` y el departamento sigue activo.
+- [x] `DeactivateAsync` con solo usuarios inactivos asignados desactiva el departamento.
+- [x] `UpdateAsync`, `ActivateAsync` y `DeactivateAsync` con un id inexistente lanzan `NotFoundException`.
+- [x] `GET /api/departments` sin token → 401 `ProblemDetails`.
+- [x] `GET /api/departments` y `GET /api/departments/{id}` con token de `Requester` → 200.
+- [x] `POST`, `PUT`, `activate` y `deactivate` con token de `Requester` → 403 `ProblemDetails`.
+- [x] `POST /api/departments` como Admin → 201 con cabecera `Location` y el `DepartmentDto`.
+- [x] `POST /api/departments` con `Name` vacío → 400 (DataAnnotations).
+- [x] `POST /api/departments` con un nombre duplicado → 409 `ProblemDetails`.
+- [x] `GET /api/departments/{id}` inexistente → 404 `ProblemDetails`.
+- [x] `POST /api/departments/{id}/deactivate` con usuarios activos → 409. Sin usuarios activos → 204.
+- [x] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas.
 
 ## Decisiones
 
