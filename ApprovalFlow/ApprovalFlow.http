@@ -81,3 +81,61 @@ Authorization: Bearer {{token}}
 ### Desactivar departamento (Admin). 409 si tiene usuarios activos
 POST {{ApprovalFlow_HostAddress}}/api/departments/00000000-0000-0000-0000-000000000000/deactivate
 Authorization: Bearer {{token}}
+
+### Listar solicitudes de compra (según rol). Filtro opcional ?status=: 1 = Pending, 2 = InReview, 3 = Approved, 4 = Rejected, 5 = Cancelled
+GET {{ApprovalFlow_HostAddress}}/api/purchase-requests?status=1
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Obtener solicitud por id (404 si no es visible para el usuario)
+GET {{ApprovalFlow_HostAddress}}/api/purchase-requests/00000000-0000-0000-0000-000000000000
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Crear solicitud (Requester)
+POST {{ApprovalFlow_HostAddress}}/api/purchase-requests
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Laptops para el equipo",
+  "justification": "Renovación de equipos obsoletos",
+  "totalAmount": 1500.50
+}
+
+### Editar solicitud (Requester dueño, solo en Pending)
+PUT {{ApprovalFlow_HostAddress}}/api/purchase-requests/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Monitores",
+  "justification": "Nuevos monitores",
+  "totalAmount": 300.00
+}
+
+### Cancelar solicitud (Requester dueño, solo en Pending)
+POST {{ApprovalFlow_HostAddress}}/api/purchase-requests/00000000-0000-0000-0000-000000000000/cancel
+Authorization: Bearer {{token}}
+
+### Iniciar revisión (Approver del departamento, solo en Pending)
+POST {{ApprovalFlow_HostAddress}}/api/purchase-requests/00000000-0000-0000-0000-000000000000/start-review
+Authorization: Bearer {{token}}
+
+### Aprobar solicitud (Approver del departamento, solo en InReview). El comentario es opcional
+POST {{ApprovalFlow_HostAddress}}/api/purchase-requests/00000000-0000-0000-0000-000000000000/approve
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "comments": "Aprobada"
+}
+
+### Rechazar solicitud (Approver del departamento, solo en InReview). El comentario es obligatorio
+POST {{ApprovalFlow_HostAddress}}/api/purchase-requests/00000000-0000-0000-0000-000000000000/reject
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "comments": "Sin presupuesto"
+}
