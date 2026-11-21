@@ -1,6 +1,6 @@
 # SPEC 09 — Validación centralizada de sesión vigente
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** SPEC 05, SPEC 06
 > **Fecha:** 2026-11-21
 > **Objetivo:** Rechazar con 401 en cada petición autenticada los tokens cuyo usuario no existe, está inactivo o tiene en la BD un rol o un departamento distinto al del token. La validación se hace en `JwtBearerEvents.OnTokenValidated` mediante `IUserSessionUseCase`.
@@ -83,21 +83,21 @@ public interface IUserSessionUseCase
 
 ## Criterios de aceptación
 
-- [ ] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
-- [ ] Existen `IUserSessionUseCase.cs` en `Abstractions/UseCases/` y `UserSessionUseCase.cs` en `Auth/`. `IUserSessionUseCase` se resuelve desde el contenedor de la API.
-- [ ] `ApprovalFlow.Application.csproj` sigue sin referenciar ASP.NET Core, Npgsql ni Infrastructure.
-- [ ] `ValidateAsync` devuelve `true` para un usuario activo con el mismo rol y departamento, incluido el caso de Admin con `departmentId` `null`.
-- [ ] `ValidateAsync` devuelve `false` si el usuario no existe, si está inactivo, si el rol difiere o si el departamento difiere (incluido `null` frente a un valor).
-- [ ] Un token válido de un usuario activo y sin cambios sigue respondiendo igual que antes (200/403 según el rol) en `/api/users/me`, `/api/departments` y `/api/purchase-requests`.
-- [ ] Tras `POST /api/users/{id}/deactivate` hecho por un Admin, el token previo del usuario desactivado → 401 `ProblemDetails` con `detail` `"La sesión ya no es válida. Inicia sesión de nuevo."`.
-- [ ] Tras `PUT /api/users/{id}/role` hecho por un Admin, el token previo de ese usuario → 401 con el mismo `detail`.
-- [ ] Si el departamento del usuario cambia en la BD, su token previo → 401 con el mismo `detail`.
-- [ ] Un token firmado correctamente para un usuario que no existe en la BD → 401 con el mismo `detail`.
-- [ ] Un Requester degradado desde Approver, con su token viejo, recibe 401 en `POST /api/purchase-requests/{id}/approve` y no 403 ni 200.
-- [ ] Después de cambiarle el rol, un nuevo `POST /api/auth/login` del usuario devuelve un token que responde 200 en `/api/users/me`.
-- [ ] Sin token, con un token mal formado o con un token expirado se sigue devolviendo 401 con `detail` `"Se requiere un token válido."`.
-- [ ] El Admin que desactiva o cambia el rol a otro usuario puede seguir usando su propio token.
-- [ ] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas.
+- [x] `dotnet build ApprovalFlow.slnx` termina sin errores ni warnings nuevos.
+- [x] Existen `IUserSessionUseCase.cs` en `Abstractions/UseCases/` y `UserSessionUseCase.cs` en `Auth/`. `IUserSessionUseCase` se resuelve desde el contenedor de la API.
+- [x] `ApprovalFlow.Application.csproj` sigue sin referenciar ASP.NET Core, Npgsql ni Infrastructure.
+- [x] `ValidateAsync` devuelve `true` para un usuario activo con el mismo rol y departamento, incluido el caso de Admin con `departmentId` `null`.
+- [x] `ValidateAsync` devuelve `false` si el usuario no existe, si está inactivo, si el rol difiere o si el departamento difiere (incluido `null` frente a un valor).
+- [x] Un token válido de un usuario activo y sin cambios sigue respondiendo igual que antes (200/403 según el rol) en `/api/users/me`, `/api/departments` y `/api/purchase-requests`.
+- [x] Tras `POST /api/users/{id}/deactivate` hecho por un Admin, el token previo del usuario desactivado → 401 `ProblemDetails` con `detail` `"La sesión ya no es válida. Inicia sesión de nuevo."`.
+- [x] Tras `PUT /api/users/{id}/role` hecho por un Admin, el token previo de ese usuario → 401 con el mismo `detail`.
+- [x] Si el departamento del usuario cambia en la BD, su token previo → 401 con el mismo `detail`.
+- [x] Un token firmado correctamente para un usuario que no existe en la BD → 401 con el mismo `detail`.
+- [x] Un Requester degradado desde Approver, con su token viejo, recibe 401 en `POST /api/purchase-requests/{id}/approve` y no 403 ni 200.
+- [x] Después de cambiarle el rol, un nuevo `POST /api/auth/login` del usuario devuelve un token que responde 200 en `/api/users/me`.
+- [x] Sin token, con un token mal formado o con un token expirado se sigue devolviendo 401 con `detail` `"Se requiere un token válido."`.
+- [x] El Admin que desactiva o cambia el rol a otro usuario puede seguir usando su propio token.
+- [x] `dotnet test` pasa todas las pruebas, tanto las anteriores como las nuevas.
 
 ## Decisiones
 
