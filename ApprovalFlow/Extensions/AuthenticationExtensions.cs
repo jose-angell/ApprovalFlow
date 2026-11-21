@@ -1,4 +1,7 @@
+using System.Security.Claims;
 using System.Text;
+using ApprovalFlow.Application.Abstractions.UseCases;
+using ApprovalFlow.Domain.Enums;
 using ApprovalFlow.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +12,8 @@ namespace ApprovalFlow.Api.Extensions;
 
 public static class AuthenticationExtensions
 {
+    private const string SessionInvalidItemKey = "approvalflow:session-invalid";
+
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -38,14 +43,19 @@ public static class AuthenticationExtensions
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnTokenValidated = ValidateSessionAsync,
                     OnChallenge = async context =>
                     {
                         context.HandleResponse();
+
+                        var sessionInvalid = context.HttpContext.Items.ContainsKey(SessionInvalidItemKey);
                         await WriteProblemAsync(
                             context.HttpContext,
                             StatusCodes.Status401Unauthorized,
                             "No autenticado",
-                            "Se requiere un token válido.");
+                            sessionInvalid
+                                ? "La sesión ya no es válida. Inicia sesión de nuevo."
+                                : "Se requiere un token válido.");
                     },
                     OnForbidden = context => WriteProblemAsync(
                         context.HttpContext,
@@ -56,6 +66,45 @@ public static class AuthenticationExtensions
             });
 
         return services;
+    }
+
+    private static async Task ValidateSessionAsync(TokenValidatedContext context)
+    {
+        var principal = context.Principal;
+
+        Guid? userId = Guid.TryParse(principal?.FindFirstValue("sub"), out var parsedUserId) ? parsedUserId : null;
+        var hasRole = Enum.TryParse<UserRole>(principal?.FindFirstValue("role"), out var role);
+
+        var departmentClaim = principal?.FindFirstValue("department_id");
+        Guid? departmentId = null;
+        var departmentValid = true;
+        if (departmentClaim is not null)
+        {
+            if (Guid.TryParse(departmentClaim, out var parsedDepartmentId))
+                departmentId = parsedDepartmentId;
+            else
+                departmentValid = false;
+        }
+
+        var valid = false;
+        if (userId is not null && hasRole && departmentValid)
+        {
+            var sessionUseCase = context.HttpContext.RequestServices.GetRequiredService<IUserSessionUseCase>();
+            valid = await sessionUseCase.ValidateAsync(
+                userId.Value, role, departmentId, context.HttpContext.RequestAborted);
+        }
+
+        if (valid)
+            return;
+
+        context.HttpContext.Items[SessionInvalidItemKey] = true;
+
+        context.HttpContext.RequestServices
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger(typeof(AuthenticationExtensions).FullName!)
+            .LogInformation("Sesión inválida para el usuario {UserId}.", userId);
+
+        context.Fail("La sesión ya no es válida.");
     }
 
     private static async Task WriteProblemAsync(HttpContext httpContext, int status, string title, string detail)

@@ -13,6 +13,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IUserUseCase, UserUseCase>();
         services.AddScoped<IAuthUseCase, AuthUseCase>();
+        services.AddScoped<IUserSessionUseCase, UserSessionUseCase>();
         services.AddScoped<IDepartmentUseCase, DepartmentUseCase>();
         services.AddScoped<IPurchaseRequestUseCase, PurchaseRequestUseCase>();
         return services;
